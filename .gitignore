@@ -1,0 +1,26 @@
+# Environment
+.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Flutter
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/.pub-cache/
+
+# Android
+mobile/android/.gradle/
+mobile/android/local.properties/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
