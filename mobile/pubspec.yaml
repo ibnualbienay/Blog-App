@@ -23,11 +23,14 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/images/pp.jpg
+
   fonts:
     - family: CormorantGaramond
       fonts:
-        - asset: fonts/CormorantGaramond-VariableFont_wght.ttf
+        - asset: assets/fonts/CormorantGaramond-VariableFont_wght.ttf
 
     - family: PlusJakartaSans
       fonts:
-        - asset: fonts/PlusJakartaSans-VariableFont_wght.ttf
+        - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf

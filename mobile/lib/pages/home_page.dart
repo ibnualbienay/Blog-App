@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import '../services/api_service.dart';
 import 'detail_page.dart';
 import 'add_article_page.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,17 +16,18 @@ class _HomePageState extends State<HomePage> {
   final ApiService apiService = ApiService();
 
   List<dynamic> posts = [];
+
   bool isLoading = true;
+
   String errorMessage = '';
 
-  String searchQuery = '';
+  int selectedIndex = 0;
+
   String selectedCategory = 'Semua';
 
   final Color primaryColor = const Color(0xFFB89A5A);
   final Color backgroundColor = const Color(0xFFFFF8E7);
   final Color textColor = const Color(0xFF5B4636);
-
-  final TextEditingController searchController = TextEditingController();
 
   final List<String> categoryList = [
     'Semua',
@@ -37,6 +40,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
     getPosts();
   }
 
@@ -101,30 +105,68 @@ class _HomePageState extends State<HomePage> {
 
   List<dynamic> get filteredPosts {
     return posts.where((post) {
-      final title = (post['title'] ?? '').toString().toLowerCase();
-      final content = (post['content'] ?? '').toString().toLowerCase();
       final category = (post['category'] ?? '').toString();
 
-      final search = searchQuery.toLowerCase().trim();
-
-      final matchesSearch =
-          title.contains(search) || content.contains(search);
-
       final matchesCategory =
-          selectedCategory == 'Semua' || category == selectedCategory;
+          selectedCategory == 'Semua' ||
+          category == selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      return matchesCategory;
     }).toList();
   }
 
   @override
-  void dispose() {
-    searchController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      _buildHomePage(),
+      const ProfilePage(),
+    ];
+
+    return Scaffold(
+      body: pages[selectedIndex],
+
+      floatingActionButton: selectedIndex == 0
+          ? FloatingActionButton(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              onPressed: openAddArticle,
+              child: const Icon(Icons.add),
+            )
+          : null,
+
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: selectedIndex,
+
+        onDestinationSelected: (index) {
+          setState(() {
+            selectedIndex = index;
+          });
+        },
+
+        backgroundColor: Colors.white,
+
+        indicatorColor: primaryColor.withValues(
+          alpha: 0.2,
+        ),
+
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildHomePage() {
     return Scaffold(
       backgroundColor: backgroundColor,
 
@@ -144,13 +186,6 @@ class _HomePageState extends State<HomePage> {
       ),
 
       body: _buildBody(),
-
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        onPressed: openAddArticle,
-        child: const Icon(Icons.add),
-      ),
     );
   }
 
@@ -167,8 +202,10 @@ class _HomePageState extends State<HomePage> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20),
+
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+
             children: [
               Icon(
                 Icons.error_outline,
@@ -211,10 +248,12 @@ class _HomePageState extends State<HomePage> {
 
                   getPosts();
                 },
+
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                 ),
+
                 child: const Text(
                   'Coba Lagi',
                   style: TextStyle(
@@ -230,9 +269,17 @@ class _HomePageState extends State<HomePage> {
 
     return RefreshIndicator(
       color: primaryColor,
+
       onRefresh: getPosts,
+
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 20, 18, 90),
+        padding: const EdgeInsets.fromLTRB(
+          18,
+          20,
+          18,
+          100,
+        ),
+
         children: [
           const Text(
             'Artikel',
@@ -257,10 +304,6 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 18),
 
-          _buildSearchField(),
-
-          const SizedBox(height: 18),
-
           _buildCategoryFilter(),
 
           const SizedBox(height: 22),
@@ -278,89 +321,24 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildSearchField() {
-    return TextField(
-      controller: searchController,
-      onChanged: (value) {
-        setState(() {
-          searchQuery = value;
-        });
-      },
-      style: const TextStyle(
-        fontFamily: 'PlusJakartaSans',
-        color: Color(0xFF5B4636),
-      ),
-      decoration: InputDecoration(
-        hintText: 'Cari artikel...',
-        hintStyle: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          color: Colors.black38,
-        ),
-
-        prefixIcon: Icon(
-          Icons.search,
-          color: primaryColor,
-        ),
-
-        suffixIcon: searchQuery.isNotEmpty
-            ? IconButton(
-                onPressed: () {
-                  searchController.clear();
-
-                  setState(() {
-                    searchQuery = '';
-                  });
-                },
-                icon: Icon(
-                  Icons.close,
-                  color: primaryColor,
-                ),
-              )
-            : null,
-
-        filled: true,
-        fillColor: Colors.white,
-
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 15,
-          vertical: 14,
-        ),
-
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(9),
-          borderSide: BorderSide.none,
-        ),
-
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(9),
-          borderSide: BorderSide(
-            color: primaryColor.withValues(alpha: 0.2),
-          ),
-        ),
-
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(9),
-          borderSide: BorderSide(
-            color: primaryColor,
-            width: 1.2,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCategoryFilter() {
     return SizedBox(
       height: 38,
+
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+
         itemCount: categoryList.length,
+
         separatorBuilder: (context, index) {
           return const SizedBox(width: 8);
         },
+
         itemBuilder: (context, index) {
           final category = categoryList[index];
-          final isSelected = selectedCategory == category;
+
+          final isSelected =
+              selectedCategory == category;
 
           return GestureDetector(
             onTap: () {
@@ -368,26 +346,35 @@ class _HomePageState extends State<HomePage> {
                 selectedCategory = category;
               });
             },
+
             child: Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 15,
                 vertical: 9,
               ),
+
               decoration: BoxDecoration(
                 color: isSelected
                     ? primaryColor
                     : Colors.white,
+
                 borderRadius: BorderRadius.circular(8),
+
                 border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.2),
+                  color: primaryColor.withValues(
+                    alpha: 0.2,
+                  ),
                 ),
               ),
+
               child: Text(
                 category,
+
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
+
                   color: isSelected
                       ? Colors.white
                       : textColor,
@@ -403,6 +390,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildEmptyPosts() {
     return Padding(
       padding: const EdgeInsets.only(top: 130),
+
       child: Column(
         children: [
           Icon(
@@ -429,10 +417,11 @@ class _HomePageState extends State<HomePage> {
   Widget _buildNoResult() {
     return Padding(
       padding: const EdgeInsets.only(top: 100),
+
       child: Column(
         children: [
           Icon(
-            Icons.search_off,
+            Icons.filter_alt_off,
             size: 48,
             color: primaryColor,
           ),
@@ -452,7 +441,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 5),
 
           const Text(
-            'Coba gunakan kata kunci atau kategori lain.',
+            'Coba pilih kategori lainnya.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
@@ -468,14 +457,18 @@ class _HomePageState extends State<HomePage> {
   Widget _buildArticleCard(dynamic post) {
     return Card(
       color: Colors.white,
+
       elevation: 1,
 
       margin: const EdgeInsets.only(bottom: 14),
 
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
+
         side: BorderSide(
-          color: primaryColor.withValues(alpha: 0.25),
+          color: primaryColor.withValues(
+            alpha: 0.25,
+          ),
         ),
       ),
 
@@ -490,11 +483,13 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(16),
 
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
 
             children: [
               Text(
                 post['title'] ?? '',
+
                 style: const TextStyle(
                   fontFamily: 'CormorantGaramond',
                   fontSize: 23,
@@ -507,8 +502,11 @@ class _HomePageState extends State<HomePage> {
 
               Text(
                 post['content'] ?? '',
+
                 maxLines: 3,
+
                 overflow: TextOverflow.ellipsis,
+
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 14,
@@ -522,7 +520,9 @@ class _HomePageState extends State<HomePage> {
               Row(
                 children: [
                   Text(
-                    post['category'] ?? 'Tanpa Kategori',
+                    post['category'] ??
+                        'Tanpa Kategori',
+
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 12,
